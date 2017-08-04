@@ -1,7 +1,7 @@
 import UIKit
 import AVFoundation
 
-class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
+class RecordSoundsViewController: UIViewController {
 
     @IBOutlet weak var recordingLabel: UILabel!
     @IBOutlet weak var recordButton: UIButton!
@@ -12,6 +12,9 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         stopRecordingButton.isEnabled = false
+        
+        recordButton.imageView?.contentMode = .scaleAspectFit
+        stopRecordingButton.imageView?.contentMode = .scaleAspectFit
     }
 
     
@@ -45,32 +48,15 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         try! audioSession.setActive(false)
     }
     
+    // MARK: -UI methods
     func configureUI(isRecording: Bool) {
-        if isRecording {
-            stopRecordingButton.isEnabled = true
-            recordButton.isEnabled = false
-            recordingLabel.text = "Recording in Progress"
-        }
-        else {
-            stopRecordingButton.isEnabled = false
-            recordButton.isEnabled = true
-            recordingLabel.text = "Tap to Record"
-        }
+        stopRecordingButton.isEnabled = isRecording
+        recordButton.isEnabled = !isRecording
+        recordingLabel.text = isRecording ? "Recording in Progress" : "Tap to Record"
     }
     
     
-    // MARK: - AVAudioRecorder delegate methods
-    func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
-        
-        if flag {
-            performSegue(withIdentifier: "stopRecordingSeque", sender: audioRecorder.url)
-        }
-        else {
-            print("Recording was not succeful.")
-        }
-    }
-    
-    
+    // MARK: Navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         
         if segue.identifier == "stopRecordingSeque" {
@@ -80,7 +66,26 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         }
     }
     
+}
+
+
+extension RecordSoundsViewController: AVAudioRecorderDelegate {
     
-    
+    func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+        
+        if flag {
+            performSegue(withIdentifier: "stopRecordingSeque", sender: audioRecorder.url)
+        }
+        else {
+            print("Recording was not succeful.")
+            
+            let alertController = UIAlertController(title: "Something went wrong", message: "Please try recording again", preferredStyle: .alert)
+            let okAction = UIAlertAction(title: "Ok", style: .default, handler: { [unowned self] (action) in
+                self.dismiss(animated: true, completion: nil)
+            })
+            alertController.addAction(okAction)
+            present(alertController, animated: true, completion: nil)
+        }
+    }
 }
 
